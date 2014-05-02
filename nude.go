@@ -4,22 +4,21 @@ import (
 	"fmt"
 	"image"
 	_ "image/jpeg"
-	"log"
 	"math"
 	"os"
 	"path/filepath"
 	"sort"
 )
 
-func IsNude(imageFilePath string) (bool, error) {
+func IsNude(imageFilePath string) (result bool, err error) {
 	path, err := filepath.Abs(imageFilePath)
 	if err != nil {
 		return false, err
 	}
 	n := New(path)
-	n.Parse()
+	result, err = n.Parse()
 
-	return n.result, nil
+	return
 }
 
 type Skin struct {
@@ -51,6 +50,7 @@ func (sml SkinMapList) Less(i, j int) bool {
 }
 
 type Nude struct {
+	filePath        string
 	image           image.Image
 	width           int
 	height          int
@@ -66,30 +66,31 @@ type Nude struct {
 }
 
 func New(path string) *Nude {
-	reader, err := os.Open(path)
+	nude := &Nude{
+		filePath: path,
+	}
+	return nude
+}
+
+func (nude *Nude) Parse() (result bool, err error) {
+	reader, err := os.Open(nude.filePath)
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 	defer reader.Close()
 
 	img, _, err := image.Decode(reader)
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 	bounds := img.Bounds()
-	nude := &Nude{
-		image:    img,
-		width:    bounds.Size().X,
-		height:   bounds.Size().Y,
-		lastFrom: -1,
-		lastTo:   -1,
-	}
+	nude.image = img
+	nude.width = bounds.Size().X
+	nude.height = bounds.Size().Y
+	nude.lastFrom = -1
+	nude.lastTo = -1
 	nude.totalPixels = nude.width * nude.height
-	return nude
-}
 
-func (nude *Nude) Parse() *Nude {
-	bounds := nude.image.Bounds()
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		width := bounds.Size().X
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -150,7 +151,7 @@ func (nude *Nude) Parse() *Nude {
 	nude.merge(nude.detectedRegions, nude.mergeRegions)
 	nude.analyzeRegions()
 
-	return nude
+	return nude.result, err
 }
 
 func (nude *Nude) addMerge(from, to int) {
