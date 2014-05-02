@@ -27,7 +27,7 @@ func main() {
 
 ```
 
-## Ohter implementations
+## Other implementations
 
 - [nude.js](http://www.patrick-wied.at/static/nudejs/)
 - [nude.rb](https://github.com/mitukiii/nude.rb)
