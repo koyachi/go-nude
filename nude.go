@@ -1,13 +1,17 @@
 package nude
 
 import (
+	"errors"
 	"fmt"
 	"image"
-	_ "image/jpeg"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
 	"math"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 func IsNude(imageFilePath string) (result bool, err error) {
@@ -72,14 +76,30 @@ func New(path string) *Nude {
 	return nude
 }
 
-func (nude *Nude) Parse() (result bool, err error) {
-	reader, err := os.Open(nude.filePath)
+func decodeImage(filePath string) (img image.Image, err error) {
+	reader, err := os.Open(filePath)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	defer reader.Close()
 
-	img, _, err := image.Decode(reader)
+	last3Strings := strings.ToLower(filePath[len(filePath)-3:])
+	last4Strings := strings.ToLower(filePath[len(filePath)-4:])
+	if last3Strings == "jpg" || last4Strings == "jpeg" {
+		img, err = jpeg.Decode(reader)
+	} else if last3Strings == "gif" {
+		img, err = gif.Decode(reader)
+	} else if last3Strings == "png" {
+		img, err = png.Decode(reader)
+	} else {
+		img = nil
+		err = errors.New("unknown format")
+	}
+	return
+}
+
+func (nude *Nude) Parse() (result bool, err error) {
+	img, err := decodeImage(nude.filePath)
 	if err != nil {
 		return false, err
 	}
