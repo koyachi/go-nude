@@ -263,9 +263,11 @@ func (nude *Nude) clearRegions(detectedRegions SkinMapList) {
 }
 
 func (nude *Nude) analyzeRegions() bool {
+	skinRegionLength := len(nude.SkinRegions)
+
 	// if there are less than 3 regions
-	if len(nude.SkinRegions) < 3 {
-		nude.message = fmt.Sprintf("Less than 3 skin regions (%v)", len(nude.SkinRegions))
+	if skinRegionLength < 3 {
+		nude.message = fmt.Sprintf("Less than 3 skin regions (%v)", skinRegionLength)
 		nude.result = false
 		return nude.result
 	}
@@ -323,8 +325,8 @@ func (nude *Nude) analyzeRegions() bool {
 	// TODO: include bounding polygon functionality
 	// if there are more than 60 skin regions and the average intensity within the polygon is less than 0.25
 	// the image is not nude
-	if len(nude.SkinRegions) > 60 {
-		nude.message = fmt.Sprintf("More than 60 skin regions (%v)", len(nude.SkinRegions))
+	if skinRegionLength > 60 {
+		nude.message = fmt.Sprintf("More than 60 skin regions (%v)", skinRegionLength)
 		nude.result = false
 		return nude.result
 	}
