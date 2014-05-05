@@ -29,8 +29,8 @@ type Skin struct {
 	id      int
 	skin    bool
 	region  int
-	x       int
-	y       int
+	X       int
+	Y       int
 	chekced bool
 }
 
@@ -60,13 +60,18 @@ type Nude struct {
 	height          int
 	totalPixels     int
 	skinMap         SkinMap
-	skinRegions     SkinMapList
+	SkinRegions     SkinMapList
 	detectedRegions SkinMapList
 	mergeRegions    [][]int
 	lastFrom        int
 	lastTo          int
 	message         string
 	result          bool
+}
+
+// experimental
+func DecodeImage(filePath string) (img image.Image, err error) {
+	return decodeImage(filePath)
 }
 
 func New(path string) *Nude {
@@ -252,26 +257,26 @@ func (nude *Nude) merge(detectedRegions SkinMapList, mergeRegions [][]int) {
 func (nude *Nude) clearRegions(detectedRegions SkinMapList) {
 	for _, region := range detectedRegions {
 		if len(region) > 30 {
-			nude.skinRegions = append(nude.skinRegions, region)
+			nude.SkinRegions = append(nude.SkinRegions, region)
 		}
 	}
 }
 
 func (nude *Nude) analyzeRegions() bool {
 	// if there are less than 3 regions
-	if len(nude.skinRegions) < 3 {
-		nude.message = fmt.Sprintf("Less than 3 skin regions (%v)", len(nude.skinRegions))
+	if len(nude.SkinRegions) < 3 {
+		nude.message = fmt.Sprintf("Less than 3 skin regions (%v)", len(nude.SkinRegions))
 		nude.result = false
 		return nude.result
 	}
 
 	// sort the skinRegions
-	sort.Sort(nude.skinRegions)
-	//sort.Reverse(nude.skinRegions)
+	sort.Sort(nude.SkinRegions)
+	//sort.Reverse(nude.SkinRegions)
 
 	// count total skin pixels
 	var totalSkin float64
-	for _, region := range nude.skinRegions {
+	for _, region := range nude.SkinRegions {
 		totalSkin += float64(len(region))
 	}
 
@@ -287,9 +292,9 @@ func (nude *Nude) analyzeRegions() bool {
 	// check if the largest skin region is less than 35% of the total skin count
 	// AND if the second largest region is less than 30% of the total skin count
 	// AND if the third largest region is less than 30% of the total skin count
-	biggestRegionParcentage := float64(len(nude.skinRegions[0])) / totalSkin * 100
-	secondLargeRegionParcentage := float64(len(nude.skinRegions[1])) / totalSkin * 100
-	thirdLargesRegionParcentage := float64(len(nude.skinRegions[2])) / totalSkin * 100
+	biggestRegionParcentage := float64(len(nude.SkinRegions[0])) / totalSkin * 100
+	secondLargeRegionParcentage := float64(len(nude.SkinRegions[1])) / totalSkin * 100
+	thirdLargesRegionParcentage := float64(len(nude.SkinRegions[2])) / totalSkin * 100
 	if biggestRegionParcentage < 35 &&
 		secondLargeRegionParcentage < 30 &&
 		thirdLargesRegionParcentage < 30 {
@@ -318,8 +323,8 @@ func (nude *Nude) analyzeRegions() bool {
 	// TODO: include bounding polygon functionality
 	// if there are more than 60 skin regions and the average intensity within the polygon is less than 0.25
 	// the image is not nude
-	if len(nude.skinRegions) > 60 {
-		nude.message = fmt.Sprintf("More than 60 skin regions (%v)", len(nude.skinRegions))
+	if len(nude.SkinRegions) > 60 {
+		nude.message = fmt.Sprintf("More than 60 skin regions (%v)", len(nude.SkinRegions))
 		nude.result = false
 		return nude.result
 	}
