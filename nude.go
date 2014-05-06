@@ -19,38 +19,15 @@ func IsNude(imageFilePath string) (result bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	n := New(path)
-	result, err = n.Parse()
+	a := New(path)
+	result, err = a.Parse()
 
 	return
-}
-
-type Nude struct {
-	filePath        string
-	image           image.Image
-	width           int
-	height          int
-	totalPixels     int
-	skinMap         SkinMap
-	SkinRegions     SkinMapList
-	detectedRegions SkinMapList
-	mergeRegions    [][]int
-	lastFrom        int
-	lastTo          int
-	message         string
-	result          bool
 }
 
 // experimental
 func DecodeImage(filePath string) (img image.Image, err error) {
 	return decodeImage(filePath)
-}
-
-func New(path string) *Nude {
-	nude := &Nude{
-		filePath: path,
-	}
-	return nude
 }
 
 func decodeImage(filePath string) (img image.Image, err error) {
@@ -75,23 +52,46 @@ func decodeImage(filePath string) (img image.Image, err error) {
 	return
 }
 
-func (nude *Nude) Parse() (result bool, err error) {
-	img, err := decodeImage(nude.filePath)
+type Analyzer struct {
+	filePath        string
+	image           image.Image
+	width           int
+	height          int
+	totalPixels     int
+	skinMap         SkinMap
+	SkinRegions     SkinMapList
+	detectedRegions SkinMapList
+	mergeRegions    [][]int
+	lastFrom        int
+	lastTo          int
+	message         string
+	result          bool
+}
+
+func New(path string) *Analyzer {
+	analyzer := &Analyzer{
+		filePath: path,
+	}
+	return analyzer
+}
+
+func (a *Analyzer) Parse() (result bool, err error) {
+	img, err := decodeImage(a.filePath)
 	if err != nil {
 		return false, err
 	}
 	bounds := img.Bounds()
-	nude.image = img
-	nude.width = bounds.Size().X
-	nude.height = bounds.Size().Y
-	nude.lastFrom = -1
-	nude.lastTo = -1
-	nude.totalPixels = nude.width * nude.height
+	a.image = img
+	a.width = bounds.Size().X
+	a.height = bounds.Size().Y
+	a.lastFrom = -1
+	a.lastTo = -1
+	a.totalPixels = a.width * a.height
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		width := bounds.Size().X
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			r, g, b, _ := nude.image.At(x, y).RGBA()
+			r, g, b, _ := a.image.At(x, y).RGBA()
 			normR := r / 256
 			normG := g / 256
 			normB := b / 256
@@ -99,9 +99,9 @@ func (nude *Nude) Parse() (result bool, err error) {
 			nextIndex := currentIndex + 1
 
 			if !classifySkin(normR, normG, normB) {
-				nude.skinMap = append(nude.skinMap, &Skin{currentIndex, false, 0, x, y, false})
+				a.skinMap = append(a.skinMap, &Skin{currentIndex, false, 0, x, y, false})
 			} else {
-				nude.skinMap = append(nude.skinMap, &Skin{currentIndex, true, 0, x, y, false})
+				a.skinMap = append(a.skinMap, &Skin{currentIndex, true, 0, x, y, false})
 
 				region := -1
 				checkIndexes := []int{
@@ -116,50 +116,50 @@ func (nude *Nude) Parse() (result bool, err error) {
 					if checkIndex < 0 {
 						continue
 					}
-					skin := nude.skinMap[checkIndex]
+					skin := a.skinMap[checkIndex]
 					if skin != nil && skin.skin {
 						if skin.region != region &&
 							region != -1 &&
-							nude.lastFrom != region &&
-							nude.lastTo != skin.region {
-							nude.addMerge(region, skin.region)
+							a.lastFrom != region &&
+							a.lastTo != skin.region {
+							a.addMerge(region, skin.region)
 						}
-						region = nude.skinMap[checkIndex].region
+						region = a.skinMap[checkIndex].region
 						checker = true
 					}
 				}
 
 				if !checker {
-					nude.skinMap[currentIndex].region = len(nude.detectedRegions)
-					nude.detectedRegions = append(nude.detectedRegions, []*Skin{nude.skinMap[currentIndex]})
+					a.skinMap[currentIndex].region = len(a.detectedRegions)
+					a.detectedRegions = append(a.detectedRegions, []*Skin{a.skinMap[currentIndex]})
 					continue
 				} else {
 					if region > -1 {
-						if len(nude.detectedRegions) >= region {
-							nude.detectedRegions = append(nude.detectedRegions, SkinMap{})
+						if len(a.detectedRegions) >= region {
+							a.detectedRegions = append(a.detectedRegions, SkinMap{})
 						}
-						nude.skinMap[currentIndex].region = region
-						nude.detectedRegions[region] = append(nude.detectedRegions[region], nude.skinMap[currentIndex])
+						a.skinMap[currentIndex].region = region
+						a.detectedRegions[region] = append(a.detectedRegions[region], a.skinMap[currentIndex])
 					}
 				}
 			}
 		}
 	}
 
-	nude.merge(nude.detectedRegions, nude.mergeRegions)
-	nude.analyzeRegions()
+	a.merge(a.detectedRegions, a.mergeRegions)
+	a.analyzeRegions()
 
-	return nude.result, err
+	return a.result, err
 }
 
-func (nude *Nude) addMerge(from, to int) {
-	nude.lastFrom = from
-	nude.lastTo = to
+func (a *Analyzer) addMerge(from, to int) {
+	a.lastFrom = from
+	a.lastTo = to
 
 	fromIndex := -1
 	toIndex := -1
 
-	for index, region := range nude.mergeRegions {
+	for index, region := range a.mergeRegions {
 		for _, regionIndex := range region {
 			if regionIndex == from {
 				fromIndex = index
@@ -172,34 +172,34 @@ func (nude *Nude) addMerge(from, to int) {
 
 	if fromIndex != -1 && toIndex != -1 {
 		if fromIndex != toIndex {
-			fromRegion := nude.mergeRegions[fromIndex]
-			toRegion := nude.mergeRegions[toIndex]
+			fromRegion := a.mergeRegions[fromIndex]
+			toRegion := a.mergeRegions[toIndex]
 			region := append(fromRegion, toRegion...)
-			nude.mergeRegions[fromIndex] = region
-			nude.mergeRegions = append(nude.mergeRegions[:toIndex], nude.mergeRegions[toIndex+1:]...)
+			a.mergeRegions[fromIndex] = region
+			a.mergeRegions = append(a.mergeRegions[:toIndex], a.mergeRegions[toIndex+1:]...)
 		}
 		return
 	}
 
 	if fromIndex == -1 && toIndex == -1 {
-		nude.mergeRegions = append(nude.mergeRegions, []int{from, to})
+		a.mergeRegions = append(a.mergeRegions, []int{from, to})
 		return
 	}
 
 	if fromIndex != -1 && toIndex == -1 {
-		nude.mergeRegions[fromIndex] = append(nude.mergeRegions[fromIndex], to)
+		a.mergeRegions[fromIndex] = append(a.mergeRegions[fromIndex], to)
 		return
 	}
 
 	if fromIndex == -1 && toIndex != -1 {
-		nude.mergeRegions[toIndex] = append(nude.mergeRegions[toIndex], from)
+		a.mergeRegions[toIndex] = append(a.mergeRegions[toIndex], from)
 		return
 	}
 
 }
 
 // function for merging detected regions
-func (nude *Nude) merge(detectedRegions SkinMapList, mergeRegions [][]int) {
+func (a *Analyzer) merge(detectedRegions SkinMapList, mergeRegions [][]int) {
 	var newDetectedRegions SkinMapList
 
 	// merging detected regions
@@ -222,67 +222,67 @@ func (nude *Nude) merge(detectedRegions SkinMapList, mergeRegions [][]int) {
 	}
 
 	// clean up
-	nude.clearRegions(newDetectedRegions)
+	a.clearRegions(newDetectedRegions)
 }
 
 // clean up function
 // only push regions which are bigger than a specific amount to the final resul
-func (nude *Nude) clearRegions(detectedRegions SkinMapList) {
+func (a *Analyzer) clearRegions(detectedRegions SkinMapList) {
 	for _, region := range detectedRegions {
 		if len(region) > 30 {
-			nude.SkinRegions = append(nude.SkinRegions, region)
+			a.SkinRegions = append(a.SkinRegions, region)
 		}
 	}
 }
 
-func (nude *Nude) analyzeRegions() bool {
-	skinRegionLength := len(nude.SkinRegions)
+func (a *Analyzer) analyzeRegions() bool {
+	skinRegionLength := len(a.SkinRegions)
 
 	// if there are less than 3 regions
 	if skinRegionLength < 3 {
-		nude.message = fmt.Sprintf("Less than 3 skin regions (%v)", skinRegionLength)
-		nude.result = false
-		return nude.result
+		a.message = fmt.Sprintf("Less than 3 skin regions (%v)", skinRegionLength)
+		a.result = false
+		return a.result
 	}
 
 	// sort the skinRegions
-	sort.Sort(nude.SkinRegions)
-	//sort.Reverse(nude.SkinRegions)
+	sort.Sort(a.SkinRegions)
+	//sort.Reverse(a.SkinRegions)
 
 	// count total skin pixels
 	var totalSkin float64
-	for _, region := range nude.SkinRegions {
+	for _, region := range a.SkinRegions {
 		totalSkin += float64(len(region))
 	}
 
 	// check if there are more than 15% skin pixel in the image
-	totalSkinParcentage := totalSkin / float64(nude.totalPixels) * 100
+	totalSkinParcentage := totalSkin / float64(a.totalPixels) * 100
 	if totalSkinParcentage < 15 {
 		// if the parcentage lower than 15, it's not nude!
-		nude.message = fmt.Sprintf("Total skin parcentage lower than 15 (%v%%)", totalSkinParcentage)
-		nude.result = false
-		return nude.result
+		a.message = fmt.Sprintf("Total skin parcentage lower than 15 (%v%%)", totalSkinParcentage)
+		a.result = false
+		return a.result
 	}
 
 	// check if the largest skin region is less than 35% of the total skin count
 	// AND if the second largest region is less than 30% of the total skin count
 	// AND if the third largest region is less than 30% of the total skin count
-	biggestRegionParcentage := float64(len(nude.SkinRegions[0])) / totalSkin * 100
-	secondLargeRegionParcentage := float64(len(nude.SkinRegions[1])) / totalSkin * 100
-	thirdLargesRegionParcentage := float64(len(nude.SkinRegions[2])) / totalSkin * 100
+	biggestRegionParcentage := float64(len(a.SkinRegions[0])) / totalSkin * 100
+	secondLargeRegionParcentage := float64(len(a.SkinRegions[1])) / totalSkin * 100
+	thirdLargesRegionParcentage := float64(len(a.SkinRegions[2])) / totalSkin * 100
 	if biggestRegionParcentage < 35 &&
 		secondLargeRegionParcentage < 30 &&
 		thirdLargesRegionParcentage < 30 {
-		nude.message = "Less than 35%, 30%, 30% skin in the biggest regions"
-		nude.result = false
-		return nude.result
+		a.message = "Less than 35%, 30%, 30% skin in the biggest regions"
+		a.result = false
+		return a.result
 	}
 
 	// check if the number of skin pixels in the largest region is less than 45% of the total skin count
 	if biggestRegionParcentage < 45 {
-		nude.message = fmt.Sprintf("The biggest region contains less than 45%% (%v)", biggestRegionParcentage)
-		nude.result = false
-		return nude.result
+		a.message = fmt.Sprintf("The biggest region contains less than 45%% (%v)", biggestRegionParcentage)
+		a.result = false
+		return a.result
 	}
 
 	// TODO:
@@ -299,14 +299,14 @@ func (nude *Nude) analyzeRegions() bool {
 	// if there are more than 60 skin regions and the average intensity within the polygon is less than 0.25
 	// the image is not nude
 	if skinRegionLength > 60 {
-		nude.message = fmt.Sprintf("More than 60 skin regions (%v)", skinRegionLength)
-		nude.result = false
-		return nude.result
+		a.message = fmt.Sprintf("More than 60 skin regions (%v)", skinRegionLength)
+		a.result = false
+		return a.result
 	}
 
 	// otherwise it is nude
-	nude.result = true
-	return nude.result
+	a.result = true
+	return a.result
 }
 
 // A Survey on Pixel-Based Skin Color Detection Techniques
