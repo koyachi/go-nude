@@ -95,19 +95,20 @@ func (nude *Nude) Parse() (result bool, err error) {
 			normR := r / 256
 			normG := g / 256
 			normB := b / 256
-			index := x + y*width + 1
+			currentIndex := x + y*width
+			nextIndex := currentIndex + 1
 
 			if !classifySkin(normR, normG, normB) {
-				nude.skinMap = append(nude.skinMap, &Skin{index, false, 0, x, y, false})
+				nude.skinMap = append(nude.skinMap, &Skin{currentIndex, false, 0, x, y, false})
 			} else {
-				nude.skinMap = append(nude.skinMap, &Skin{index, true, 0, x, y, false})
+				nude.skinMap = append(nude.skinMap, &Skin{currentIndex, true, 0, x, y, false})
 
 				region := -1
 				checkIndexes := []int{
-					index - 2,
-					index - width - 2,
-					index - width - 1,
-					index - width,
+					nextIndex - 2,
+					nextIndex - width - 2,
+					nextIndex - width - 1,
+					nextIndex - width,
 				}
 				checker := false
 
@@ -129,16 +130,16 @@ func (nude *Nude) Parse() (result bool, err error) {
 				}
 
 				if !checker {
-					nude.skinMap[index-1].region = len(nude.detectedRegions)
-					nude.detectedRegions = append(nude.detectedRegions, []*Skin{nude.skinMap[index-1]})
+					nude.skinMap[currentIndex].region = len(nude.detectedRegions)
+					nude.detectedRegions = append(nude.detectedRegions, []*Skin{nude.skinMap[currentIndex]})
 					continue
 				} else {
 					if region > -1 {
 						if len(nude.detectedRegions) >= region {
 							nude.detectedRegions = append(nude.detectedRegions, SkinMap{})
 						}
-						nude.skinMap[index-1].region = region
-						nude.detectedRegions[region] = append(nude.detectedRegions[region], nude.skinMap[index-1])
+						nude.skinMap[currentIndex].region = region
+						nude.detectedRegions[region] = append(nude.detectedRegions[region], nude.skinMap[currentIndex])
 					}
 				}
 			}
