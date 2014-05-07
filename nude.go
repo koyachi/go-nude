@@ -309,6 +309,10 @@ func (a *Analyzer) analyzeRegions() bool {
 	return a.result
 }
 
+func (a *Analyzer) String() string {
+	return fmt.Sprintf("#<nude.Analyzer result=%t, message=%s>", a.result, a.message)
+}
+
 // A Survey on Pixel-Based Skin Color Detection Techniques
 func classifySkin(r, g, b uint32) bool {
 	rgbClassifier := r > 95 &&

@@ -73,5 +73,6 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Printf("isNude = %v\n", isNude)
+	fmt.Printf("%s\n", n)
 	drawImageAndRegions(imagePath, n.SkinRegions)
 }
