@@ -1,29 +1,29 @@
 package nude
 
-type Skin struct {
+type Pixel struct {
 	id      int
-	skin    bool
+	isSkin  bool
 	region  int
 	X       int
 	Y       int
 	chekced bool
 }
 
-type SkinMap []*Skin
-type SkinMapList []SkinMap
+type Pixels []*Pixel
+type Regions []Pixels
 
 //
 // sort interface
 //
 
-func (sml SkinMapList) Len() int {
+func (sml Regions) Len() int {
 	return len(sml)
 }
 
-func (sml SkinMapList) Swap(i, j int) {
+func (sml Regions) Swap(i, j int) {
 	sml[i], sml[j] = sml[j], sml[i]
 }
 
-func (sml SkinMapList) Less(i, j int) bool {
+func (sml Regions) Less(i, j int) bool {
 	return len(sml[i]) > len(sml[j])
 }

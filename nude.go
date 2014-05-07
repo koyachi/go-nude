@@ -1,17 +1,11 @@
 package nude
 
 import (
-	"errors"
 	"fmt"
 	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
 	"math"
-	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 )
 
 func IsNude(imageFilePath string) (result bool, err error) {
@@ -25,42 +19,15 @@ func IsNude(imageFilePath string) (result bool, err error) {
 	return
 }
 
-// experimental
-func DecodeImage(filePath string) (img image.Image, err error) {
-	return decodeImage(filePath)
-}
-
-func decodeImage(filePath string) (img image.Image, err error) {
-	reader, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-
-	last3Strings := strings.ToLower(filePath[len(filePath)-3:])
-	last4Strings := strings.ToLower(filePath[len(filePath)-4:])
-	if last3Strings == "jpg" || last4Strings == "jpeg" {
-		img, err = jpeg.Decode(reader)
-	} else if last3Strings == "gif" {
-		img, err = gif.Decode(reader)
-	} else if last3Strings == "png" {
-		img, err = png.Decode(reader)
-	} else {
-		img = nil
-		err = errors.New("unknown format")
-	}
-	return
-}
-
 type Detector struct {
 	filePath        string
 	image           image.Image
 	width           int
 	height          int
 	totalPixels     int
-	skinMap         SkinMap
-	SkinRegions     SkinMapList
-	detectedRegions SkinMapList
+	pixels          Pixels
+	SkinRegions     Regions
+	detectedRegions Regions
 	mergeRegions    [][]int
 	lastFrom        int
 	lastTo          int
@@ -99,9 +66,9 @@ func (d *Detector) Parse() (result bool, err error) {
 			nextIndex := currentIndex + 1
 
 			if !classifySkin(normR, normG, normB) {
-				d.skinMap = append(d.skinMap, &Skin{currentIndex, false, 0, x, y, false})
+				d.pixels = append(d.pixels, &Pixel{currentIndex, false, 0, x, y, false})
 			} else {
-				d.skinMap = append(d.skinMap, &Skin{currentIndex, true, 0, x, y, false})
+				d.pixels = append(d.pixels, &Pixel{currentIndex, true, 0, x, y, false})
 
 				region := -1
 				checkIndexes := []int{
@@ -116,30 +83,30 @@ func (d *Detector) Parse() (result bool, err error) {
 					if checkIndex < 0 {
 						continue
 					}
-					skin := d.skinMap[checkIndex]
-					if skin != nil && skin.skin {
+					skin := d.pixels[checkIndex]
+					if skin != nil && skin.isSkin {
 						if skin.region != region &&
 							region != -1 &&
 							d.lastFrom != region &&
 							d.lastTo != skin.region {
 							d.addMerge(region, skin.region)
 						}
-						region = d.skinMap[checkIndex].region
+						region = d.pixels[checkIndex].region
 						checker = true
 					}
 				}
 
 				if !checker {
-					d.skinMap[currentIndex].region = len(d.detectedRegions)
-					d.detectedRegions = append(d.detectedRegions, []*Skin{d.skinMap[currentIndex]})
+					d.pixels[currentIndex].region = len(d.detectedRegions)
+					d.detectedRegions = append(d.detectedRegions, Pixels{d.pixels[currentIndex]})
 					continue
 				} else {
 					if region > -1 {
 						if len(d.detectedRegions) >= region {
-							d.detectedRegions = append(d.detectedRegions, SkinMap{})
+							d.detectedRegions = append(d.detectedRegions, Pixels{})
 						}
-						d.skinMap[currentIndex].region = region
-						d.detectedRegions[region] = append(d.detectedRegions[region], d.skinMap[currentIndex])
+						d.pixels[currentIndex].region = region
+						d.detectedRegions[region] = append(d.detectedRegions[region], d.pixels[currentIndex])
 					}
 				}
 			}
@@ -199,17 +166,17 @@ func (d *Detector) addMerge(from, to int) {
 }
 
 // function for merging detected regions
-func (d *Detector) merge(detectedRegions SkinMapList, mergeRegions [][]int) {
-	var newDetectedRegions SkinMapList
+func (d *Detector) merge(detectedRegions Regions, mergeRegions [][]int) {
+	var newDetectedRegions Regions
 
 	// merging detected regions
 	for index, region := range mergeRegions {
 		if len(newDetectedRegions) >= index {
-			newDetectedRegions = append(newDetectedRegions, SkinMap{})
+			newDetectedRegions = append(newDetectedRegions, Pixels{})
 		}
 		for _, r := range region {
 			newDetectedRegions[index] = append(newDetectedRegions[index], detectedRegions[r]...)
-			detectedRegions[r] = SkinMap{}
+			detectedRegions[r] = Pixels{}
 		}
 	}
 
@@ -227,7 +194,7 @@ func (d *Detector) merge(detectedRegions SkinMapList, mergeRegions [][]int) {
 
 // clean up function
 // only push regions which are bigger than a specific amount to the final resul
-func (d *Detector) clearRegions(detectedRegions SkinMapList) {
+func (d *Detector) clearRegions(detectedRegions Regions) {
 	for _, region := range detectedRegions {
 		if len(region) > 30 {
 			d.SkinRegions = append(d.SkinRegions, region)

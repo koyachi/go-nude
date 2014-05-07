@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 )
 
-func drawImageAndRegions(imagePath string, regions nude.SkinMapList) {
+func drawImageAndRegions(imagePath string, regions nude.Regions) {
 	path, err := filepath.Abs(imagePath)
 	if err != nil {
 		log.Fatal(err)
