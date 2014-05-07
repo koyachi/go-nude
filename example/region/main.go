@@ -67,12 +67,12 @@ func main() {
 	//imagePath := "../images/test2.jpg"
 	//imagePath := "../images/test6.jpg"
 
-	n := nude.New(imagePath)
-	isNude, err := n.Parse()
+	d := nude.NewDetector(imagePath)
+	isNude, err := d.Parse()
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("isNude = %v\n", isNude)
-	fmt.Printf("%s\n", n)
-	drawImageAndRegions(imagePath, n.SkinRegions)
+	fmt.Printf("%s\n", d)
+	drawImageAndRegions(imagePath, d.SkinRegions)
 }
