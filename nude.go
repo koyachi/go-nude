@@ -213,17 +213,13 @@ func (d *Detector) analyzeRegions() bool {
 	}
 
 	// sort the skinRegions
-	sort.Sort(d.SkinRegions)
-	//sort.Reverse(d.SkinRegions)
+	sort.Sort(sort.Reverse(d.SkinRegions))
 
 	// count total skin pixels
-	var totalSkin float64
-	for _, region := range d.SkinRegions {
-		totalSkin += float64(len(region))
-	}
+	totalSkinPixels := float64(d.SkinRegions.totalPixels())
 
 	// check if there are more than 15% skin pixel in the image
-	totalSkinParcentage := totalSkin / float64(d.totalPixels) * 100
+	totalSkinParcentage := totalSkinPixels / float64(d.totalPixels) * 100
 	if totalSkinParcentage < 15 {
 		// if the parcentage lower than 15, it's not nude!
 		d.message = fmt.Sprintf("Total skin parcentage lower than 15 (%v%%)", totalSkinParcentage)
@@ -234,9 +230,9 @@ func (d *Detector) analyzeRegions() bool {
 	// check if the largest skin region is less than 35% of the total skin count
 	// AND if the second largest region is less than 30% of the total skin count
 	// AND if the third largest region is less than 30% of the total skin count
-	biggestRegionParcentage := float64(len(d.SkinRegions[0])) / totalSkin * 100
-	secondLargeRegionParcentage := float64(len(d.SkinRegions[1])) / totalSkin * 100
-	thirdLargesRegionParcentage := float64(len(d.SkinRegions[2])) / totalSkin * 100
+	biggestRegionParcentage := float64(len(d.SkinRegions[0])) / totalSkinPixels * 100
+	secondLargeRegionParcentage := float64(len(d.SkinRegions[1])) / totalSkinPixels * 100
+	thirdLargesRegionParcentage := float64(len(d.SkinRegions[2])) / totalSkinPixels * 100
 	if biggestRegionParcentage < 35 &&
 		secondLargeRegionParcentage < 30 &&
 		thirdLargesRegionParcentage < 30 {

@@ -10,7 +10,16 @@ type Pixel struct {
 }
 
 type Pixels []*Pixel
+
 type Regions []Pixels
+
+func (r Regions) totalPixels() int {
+	var totalSkin int
+	for _, pixels := range r {
+		totalSkin += len(pixels)
+	}
+	return totalSkin
+}
 
 //
 // sort interface
@@ -25,5 +34,5 @@ func (r Regions) Swap(i, j int) {
 }
 
 func (r Regions) Less(i, j int) bool {
-	return len(r[i]) > len(r[j])
+	return len(r[i]) < len(r[j])
 }
