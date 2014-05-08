@@ -16,14 +16,14 @@ type Regions []Pixels
 // sort interface
 //
 
-func (sml Regions) Len() int {
-	return len(sml)
+func (r Regions) Len() int {
+	return len(r)
 }
 
-func (sml Regions) Swap(i, j int) {
-	sml[i], sml[j] = sml[j], sml[i]
+func (r Regions) Swap(i, j int) {
+	r[i], r[j] = r[j], r[i]
 }
 
-func (sml Regions) Less(i, j int) bool {
-	return len(sml[i]) > len(sml[j])
+func (r Regions) Less(i, j int) bool {
+	return len(r[i]) > len(r[j])
 }
