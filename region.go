@@ -7,6 +7,7 @@ type Pixel struct {
 	X       int
 	Y       int
 	chekced bool
+	V       float64 // intesitiy(Value) of HSV
 }
 
 // TODO: cache caluculated leftMost, rightMost, upperMost, lowerMost.
@@ -126,6 +127,14 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 	return float64(skin) / float64(total)
 }
 
+func (r Region) averageIntensity() float64 {
+	var totalIntensity float64
+	for _, pixel := range r {
+		totalIntensity = totalIntensity + pixel.V
+	}
+	return totalIntensity / float64(len(r))
+}
+
 type Regions []Region
 
 func (r Regions) totalPixels() int {
@@ -134,6 +143,14 @@ func (r Regions) totalPixels() int {
 		totalSkin += len(pixels)
 	}
 	return totalSkin
+}
+
+func (r Regions) averageIntensity() float64 {
+	var totalIntensity float64
+	for _, region := range r {
+		totalIntensity = totalIntensity + region.averageIntensity()
+	}
+	return totalIntensity / float64(len(r))
 }
 
 //

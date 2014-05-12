@@ -65,10 +65,11 @@ func (d *Detector) Parse() (result bool, err error) {
 			currentIndex := x + y*width
 			nextIndex := currentIndex + 1
 
-			if !classifySkin(normR, normG, normB) {
-				d.pixels = append(d.pixels, &Pixel{currentIndex, false, 0, x, y, false})
+			isSkin, v := classifySkin(normR, normG, normB)
+			if !isSkin {
+				d.pixels = append(d.pixels, &Pixel{currentIndex, false, 0, x, y, false, v})
 			} else {
-				d.pixels = append(d.pixels, &Pixel{currentIndex, true, 0, x, y, false})
+				d.pixels = append(d.pixels, &Pixel{currentIndex, true, 0, x, y, false, v})
 
 				region := -1
 				checkIndexes := []int{
@@ -267,11 +268,11 @@ func (d *Detector) analyzeRegions() bool {
 		}
 	}
 
-	// TODO: include bounding polygon functionality
 	// if there are more than 60 skin regions and the average intensity within the polygon is less than 0.25
 	// the image is not nude
-	if skinRegionLength > 60 {
-		d.message = fmt.Sprintf("More than 60 skin regions (%v)", skinRegionLength)
+	averageIntensity := d.SkinRegions.averageIntensity()
+	if skinRegionLength > 60 && averageIntensity < 0.25 {
+		d.message = fmt.Sprintf("More than 60 skin regions(%v) and averageIntensity(%v) < 0.25", skinRegionLength, averageIntensity)
 		d.result = false
 		return d.result
 	}
@@ -286,7 +287,7 @@ func (d *Detector) String() string {
 }
 
 // A Survey on Pixel-Based Skin Color Detection Techniques
-func classifySkin(r, g, b uint32) bool {
+func classifySkin(r, g, b uint32) (bool, float64) {
 	rgbClassifier := r > 95 &&
 		g > 40 && g < 100 &&
 		b > 20 &&
@@ -300,7 +301,7 @@ func classifySkin(r, g, b uint32) bool {
 		(float64(r*b))/math.Pow(float64(r+g+b), 2) > 0.107 &&
 		(float64(r*g))/math.Pow(float64(r+g+b), 2) > 0.112
 
-	h, s, _ := toHsv(r, g, b)
+	h, s, v := toHsv(r, g, b)
 	hsvClassifier := h > 0 &&
 		h < 35 &&
 		s > 0.23 &&
@@ -309,7 +310,7 @@ func classifySkin(r, g, b uint32) bool {
 	// ycc doesnt work
 
 	result := rgbClassifier || normalizedRgbClassifier || hsvClassifier
-	return result
+	return result, v
 }
 
 func maxRgb(r, g, b uint32) float64 {
