@@ -253,10 +253,19 @@ func (d *Detector) analyzeRegions() bool {
 	// Identify the leftmost, the uppermost, the rightmost, and the lowermost skin pixels of the three largest skin regions.
 	// Use these points as the corner points of a bounding polygon.
 
-	// TODO:
 	// check if the total skin count is less than 30% of the total number of pixels
 	// AND the number of skin pixels within the bounding polygon is less than 55% of the size of the polygon
 	// if this condition is true, it's not nude.
+	if totalSkinParcentage < 30 {
+		for i, region := range d.SkinRegions {
+			skinRate := region.skinRateInBoundingPolygon()
+			if skinRate < 0.55 {
+				d.message = fmt.Sprintf("region[%d].skinRate(%v) < 0.55", i, skinRate)
+				d.result = false
+				return d.result
+			}
+		}
+	}
 
 	// TODO: include bounding polygon functionality
 	// if there are more than 60 skin regions and the average intensity within the polygon is less than 0.25
