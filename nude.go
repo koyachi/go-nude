@@ -260,7 +260,7 @@ func (d *Detector) analyzeRegions() bool {
 	if totalSkinParcentage < 30 {
 		for i, region := range d.SkinRegions {
 			skinRate := region.skinRateInBoundingPolygon()
-			fmt.Printf("skinRate[%v] = %v\n", i, skinRate)
+			//fmt.Printf("skinRate[%v] = %v\n", i, skinRate)
 			if skinRate < 0.55 {
 				d.message = fmt.Sprintf("region[%d].skinRate(%v) < 0.55", i, skinRate)
 				d.result = false

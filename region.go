@@ -14,14 +14,14 @@ type Pixel struct {
 type Region []*Pixel
 
 // TODO: optimize
-func (r Region) isSkin(x, y int) bool {
-	for _, pixel := range r {
-		if pixel.isSkin && pixel.X == x && pixel.Y == y {
-			return true
-		}
-	}
-	return false
-}
+//func (r Region) isSkin(x, y int) bool {
+//	for _, pixel := range r {
+//		if pixel.isSkin && pixel.X == x && pixel.Y == y {
+//			return true
+//		}
+//	}
+//	return false
+//}
 
 func (r Region) leftMost() *Pixel {
 	minX := 1000000
@@ -82,6 +82,22 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 	var h int
 	var inclination float64
 
+	skinPixels := []*Pixel{}
+	for _, pixel := range r {
+		if pixel.isSkin {
+			skinPixels = append(skinPixels, pixel)
+		}
+	}
+	isSkinPixel := func(x, y int) bool {
+		for i, pixel := range skinPixels {
+			if pixel.X == x && pixel.Y == y {
+				skinPixels = append(skinPixels[:i], skinPixels[i+1:]...)
+				return true
+			}
+		}
+		return false
+	}
+
 	// left-upper
 	w = upper.X - left.X
 	h = left.Y - upper.Y
@@ -90,7 +106,7 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 		xx := float64(y) / inclination
 		for x := left.X; x < upper.X; x++ {
 			if float64(x) >= xx {
-				if r.isSkin(x, y) {
+				if isSkinPixel(x, y) {
 					skin = skin + 1
 				}
 				total = total + 1
@@ -105,7 +121,7 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 		xx := float64(y) / inclination
 		for x := upper.X; x < right.X; x++ {
 			if float64(x) <= xx {
-				if r.isSkin(x, y) {
+				if isSkinPixel(x, y) {
 					skin = skin + 1
 				}
 				total = total + 1
@@ -120,7 +136,7 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 		xx := float64(y) / inclination
 		for x := left.X; x < lower.X; x++ {
 			if float64(x) >= xx {
-				if r.isSkin(x, y) {
+				if isSkinPixel(x, y) {
 					skin = skin + 1
 				}
 				total = total + 1
@@ -135,7 +151,7 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 		xx := float64(y) / inclination
 		for x := lower.X; x < right.X; x++ {
 			if float64(x) <= xx {
-				if r.isSkin(x, y) {
+				if isSkinPixel(x, y) {
 					skin = skin + 1
 				}
 				total = total + 1
