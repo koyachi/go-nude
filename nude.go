@@ -25,7 +25,7 @@ type Detector struct {
 	width           int
 	height          int
 	totalPixels     int
-	pixels          Pixels
+	pixels          Region
 	SkinRegions     Regions
 	detectedRegions Regions
 	mergeRegions    [][]int
@@ -98,12 +98,12 @@ func (d *Detector) Parse() (result bool, err error) {
 
 				if !checker {
 					d.pixels[currentIndex].region = len(d.detectedRegions)
-					d.detectedRegions = append(d.detectedRegions, Pixels{d.pixels[currentIndex]})
+					d.detectedRegions = append(d.detectedRegions, Region{d.pixels[currentIndex]})
 					continue
 				} else {
 					if region > -1 {
 						if len(d.detectedRegions) >= region {
-							d.detectedRegions = append(d.detectedRegions, Pixels{})
+							d.detectedRegions = append(d.detectedRegions, Region{})
 						}
 						d.pixels[currentIndex].region = region
 						d.detectedRegions[region] = append(d.detectedRegions[region], d.pixels[currentIndex])
@@ -172,11 +172,11 @@ func (d *Detector) merge(detectedRegions Regions, mergeRegions [][]int) {
 	// merging detected regions
 	for index, region := range mergeRegions {
 		if len(newDetectedRegions) >= index {
-			newDetectedRegions = append(newDetectedRegions, Pixels{})
+			newDetectedRegions = append(newDetectedRegions, Region{})
 		}
 		for _, r := range region {
 			newDetectedRegions[index] = append(newDetectedRegions[index], detectedRegions[r]...)
-			detectedRegions[r] = Pixels{}
+			detectedRegions[r] = Region{}
 		}
 	}
 
