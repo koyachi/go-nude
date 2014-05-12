@@ -13,6 +13,16 @@ type Pixel struct {
 // TODO: cache caluculated leftMost, rightMost, upperMost, lowerMost.
 type Region []*Pixel
 
+// TODO: optimize
+func (r Region) isSkin(x, y int) bool {
+	for _, pixel := range r {
+		if pixel.isSkin && pixel.X == x && pixel.Y == y {
+			return true
+		}
+	}
+	return false
+}
+
 func (r Region) leftMost() *Pixel {
 	minX := 1000000
 	index := 0
@@ -71,6 +81,7 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 	var w int
 	var h int
 	var inclination float64
+
 	// left-upper
 	w = upper.X - left.X
 	h = left.Y - upper.Y
@@ -79,9 +90,11 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 		xx := float64(y) / inclination
 		for x := left.X; x < upper.X; x++ {
 			if float64(x) >= xx {
-				skin = skin + 1
+				if r.isSkin(x, y) {
+					skin = skin + 1
+				}
+				total = total + 1
 			}
-			total = total + 1
 		}
 	}
 	// upper-right
@@ -92,9 +105,11 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 		xx := float64(y) / inclination
 		for x := upper.X; x < right.X; x++ {
 			if float64(x) <= xx {
-				skin = skin + 1
+				if r.isSkin(x, y) {
+					skin = skin + 1
+				}
+				total = total + 1
 			}
-			total = total + 1
 		}
 	}
 	// left-lower
@@ -105,9 +120,11 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 		xx := float64(y) / inclination
 		for x := left.X; x < lower.X; x++ {
 			if float64(x) >= xx {
-				skin = skin + 1
+				if r.isSkin(x, y) {
+					skin = skin + 1
+				}
+				total = total + 1
 			}
-			total = total + 1
 		}
 	}
 	// lower-right
@@ -118,9 +135,11 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 		xx := float64(y) / inclination
 		for x := lower.X; x < right.X; x++ {
 			if float64(x) <= xx {
-				skin = skin + 1
+				if r.isSkin(x, y) {
+					skin = skin + 1
+				}
+				total = total + 1
 			}
-			total = total + 1
 		}
 	}
 
