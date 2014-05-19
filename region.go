@@ -162,6 +162,35 @@ func (r Region) skinRateInBoundingPolygon() float64 {
 	return float64(skin) / float64(total)
 }
 
+func (r Region) skinRateInBoundingPolygon2() float64 {
+	left := r.leftMost()
+	right := r.rightMost()
+	upper := r.upperMost()
+	lower := r.lowerMost()
+	vertices := []*Pixel{left, upper, right, lower, left}
+	total := 0
+	skin := 0
+
+	// via http://katsura-kotonoha.sakura.ne.jp/prog/c/tip0002f.shtml
+	for _, p1 := range r {
+		inPolygon := true
+		for i := 0; i < len(vertices)-1; i++ {
+			p2 := vertices[i]
+			p3 := vertices[i+1]
+			n := p1.X*(p2.Y-p3.Y) + p2.X*(p3.Y-p1.Y) + p3.X*(p1.Y-p2.Y)
+			if n < 0 {
+				inPolygon = false
+				break
+			}
+		}
+		if inPolygon && p1.isSkin {
+			skin = skin + 1
+		}
+		total = total + 1
+	}
+	return float64(skin) / float64(total)
+}
+
 func (r Region) averageIntensity() float64 {
 	var totalIntensity float64
 	for _, pixel := range r {

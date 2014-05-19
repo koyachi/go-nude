@@ -259,7 +259,8 @@ func (d *Detector) analyzeRegions() bool {
 	// if this condition is true, it's not nude.
 	if totalSkinParcentage < 30 {
 		for i, region := range d.SkinRegions {
-			skinRate := region.skinRateInBoundingPolygon()
+			//skinRate := region.skinRateInBoundingPolygon()
+			skinRate := region.skinRateInBoundingPolygon2()
 			//fmt.Printf("skinRate[%v] = %v\n", i, skinRate)
 			if skinRate < 0.55 {
 				d.message = fmt.Sprintf("region[%d].skinRate(%v) < 0.55", i, skinRate)
