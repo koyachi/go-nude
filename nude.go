@@ -249,11 +249,6 @@ func (d *Detector) analyzeRegions() bool {
 		return d.result
 	}
 
-	// TODO:
-	// build the bounding polygon by the regions edge values:
-	// Identify the leftmost, the uppermost, the rightmost, and the lowermost skin pixels of the three largest skin regions.
-	// Use these points as the corner points of a bounding polygon.
-
 	// check if the total skin count is less than 30% of the total number of pixels
 	// AND the number of skin pixels within the bounding polygon is less than 55% of the size of the polygon
 	// if this condition is true, it's not nude.

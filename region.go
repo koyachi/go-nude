@@ -72,6 +72,9 @@ func (r Region) lowerMost() *Pixel {
 }
 
 func (r Region) skinRateInBoundingPolygon() float64 {
+	// build the bounding polygon by the regions edge values:
+	// Identify the leftmost, the uppermost, the rightmost, and the lowermost skin pixels of the three largest skin regions.
+	// Use these points as the corner points of a bounding polygon.
 	left := r.leftMost()
 	right := r.rightMost()
 	upper := r.upperMost()
