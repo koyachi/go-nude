@@ -25,7 +25,7 @@ type Detector struct {
 	width           int
 	height          int
 	totalPixels     int
-	pixels          Pixels
+	pixels          Region
 	SkinRegions     Regions
 	detectedRegions Regions
 	mergeRegions    [][]int
@@ -65,10 +65,11 @@ func (d *Detector) Parse() (result bool, err error) {
 			currentIndex := x + y*width
 			nextIndex := currentIndex + 1
 
-			if !classifySkin(normR, normG, normB) {
-				d.pixels = append(d.pixels, &Pixel{currentIndex, false, 0, x, y, false})
+			isSkin, v := classifySkin(normR, normG, normB)
+			if !isSkin {
+				d.pixels = append(d.pixels, &Pixel{currentIndex, false, 0, x, y, false, v})
 			} else {
-				d.pixels = append(d.pixels, &Pixel{currentIndex, true, 0, x, y, false})
+				d.pixels = append(d.pixels, &Pixel{currentIndex, true, 0, x, y, false, v})
 
 				region := -1
 				checkIndexes := []int{
@@ -98,12 +99,12 @@ func (d *Detector) Parse() (result bool, err error) {
 
 				if !checker {
 					d.pixels[currentIndex].region = len(d.detectedRegions)
-					d.detectedRegions = append(d.detectedRegions, Pixels{d.pixels[currentIndex]})
+					d.detectedRegions = append(d.detectedRegions, Region{d.pixels[currentIndex]})
 					continue
 				} else {
 					if region > -1 {
 						if len(d.detectedRegions) >= region {
-							d.detectedRegions = append(d.detectedRegions, Pixels{})
+							d.detectedRegions = append(d.detectedRegions, Region{})
 						}
 						d.pixels[currentIndex].region = region
 						d.detectedRegions[region] = append(d.detectedRegions[region], d.pixels[currentIndex])
@@ -172,11 +173,11 @@ func (d *Detector) merge(detectedRegions Regions, mergeRegions [][]int) {
 	// merging detected regions
 	for index, region := range mergeRegions {
 		if len(newDetectedRegions) >= index {
-			newDetectedRegions = append(newDetectedRegions, Pixels{})
+			newDetectedRegions = append(newDetectedRegions, Region{})
 		}
 		for _, r := range region {
 			newDetectedRegions[index] = append(newDetectedRegions[index], detectedRegions[r]...)
-			detectedRegions[r] = Pixels{}
+			detectedRegions[r] = Region{}
 		}
 	}
 
@@ -248,21 +249,26 @@ func (d *Detector) analyzeRegions() bool {
 		return d.result
 	}
 
-	// TODO:
-	// build the bounding polygon by the regions edge values:
-	// Identify the leftmost, the uppermost, the rightmost, and the lowermost skin pixels of the three largest skin regions.
-	// Use these points as the corner points of a bounding polygon.
-
-	// TODO:
 	// check if the total skin count is less than 30% of the total number of pixels
 	// AND the number of skin pixels within the bounding polygon is less than 55% of the size of the polygon
 	// if this condition is true, it's not nude.
+	if totalSkinParcentage < 30 {
+		for i, region := range d.SkinRegions {
+			skinRate := region.skinRateInBoundingPolygon()
+			//fmt.Printf("skinRate[%v] = %v\n", i, skinRate)
+			if skinRate < 0.55 {
+				d.message = fmt.Sprintf("region[%d].skinRate(%v) < 0.55", i, skinRate)
+				d.result = false
+				return d.result
+			}
+		}
+	}
 
-	// TODO: include bounding polygon functionality
 	// if there are more than 60 skin regions and the average intensity within the polygon is less than 0.25
 	// the image is not nude
-	if skinRegionLength > 60 {
-		d.message = fmt.Sprintf("More than 60 skin regions (%v)", skinRegionLength)
+	averageIntensity := d.SkinRegions.averageIntensity()
+	if skinRegionLength > 60 && averageIntensity < 0.25 {
+		d.message = fmt.Sprintf("More than 60 skin regions(%v) and averageIntensity(%v) < 0.25", skinRegionLength, averageIntensity)
 		d.result = false
 		return d.result
 	}
@@ -277,7 +283,7 @@ func (d *Detector) String() string {
 }
 
 // A Survey on Pixel-Based Skin Color Detection Techniques
-func classifySkin(r, g, b uint32) bool {
+func classifySkin(r, g, b uint32) (bool, float64) {
 	rgbClassifier := r > 95 &&
 		g > 40 && g < 100 &&
 		b > 20 &&
@@ -291,7 +297,7 @@ func classifySkin(r, g, b uint32) bool {
 		(float64(r*b))/math.Pow(float64(r+g+b), 2) > 0.107 &&
 		(float64(r*g))/math.Pow(float64(r+g+b), 2) > 0.112
 
-	h, s, _ := toHsv(r, g, b)
+	h, s, v := toHsv(r, g, b)
 	hsvClassifier := h > 0 &&
 		h < 35 &&
 		s > 0.23 &&
@@ -300,7 +306,7 @@ func classifySkin(r, g, b uint32) bool {
 	// ycc doesnt work
 
 	result := rgbClassifier || normalizedRgbClassifier || hsvClassifier
-	return result
+	return result, v
 }
 
 func maxRgb(r, g, b uint32) float64 {
