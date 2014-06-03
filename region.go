@@ -1,5 +1,9 @@
 package nude
 
+import (
+	"math"
+)
+
 type Pixel struct {
 	id      int
 	isSkin  bool
@@ -24,7 +28,7 @@ type Region []*Pixel
 //}
 
 func (r Region) leftMost() *Pixel {
-	minX := 1000000
+	minX := math.MaxInt32
 	index := 0
 	for i, pixel := range r {
 		if pixel.X < minX {
@@ -36,7 +40,7 @@ func (r Region) leftMost() *Pixel {
 }
 
 func (r Region) rightMost() *Pixel {
-	maxX := -1
+	maxX := math.MinInt32
 	index := 0
 	for i, pixel := range r {
 		if pixel.X > maxX {
@@ -48,7 +52,7 @@ func (r Region) rightMost() *Pixel {
 }
 
 func (r Region) upperMost() *Pixel {
-	minY := 1000000
+	minY := math.MaxInt32
 	index := 0
 	for i, pixel := range r {
 		if pixel.Y < minY {
@@ -60,7 +64,7 @@ func (r Region) upperMost() *Pixel {
 }
 
 func (r Region) lowerMost() *Pixel {
-	maxY := -1
+	maxY := math.MinInt32
 	index := 0
 	for i, pixel := range r {
 		if pixel.Y > maxY {
