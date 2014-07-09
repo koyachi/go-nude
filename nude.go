@@ -8,19 +8,30 @@ import (
 	"sort"
 )
 
-func IsNude(imageFilePath string) (result bool, err error) {
+func IsNude(imageFilePath string) (bool, error) {
+	return IsFileNude(imageFilePath)
+}
+
+func IsFileNude(imageFilePath string) (bool, error) {
 	path, err := filepath.Abs(imageFilePath)
 	if err != nil {
 		return false, err
 	}
-	d := NewDetector(path)
-	result, err = d.Parse()
 
-	return
+	img, err := decodeImage(path)
+	if err != nil {
+		return false, err
+	}
+
+	return IsImageNude(img)
+}
+
+func IsImageNude(img image.Image) (bool, error) {
+	d:= NewDetector(img)
+	return d.Parse()
 }
 
 type Detector struct {
-	filePath        string
 	image           image.Image
 	width           int
 	height          int
@@ -35,18 +46,13 @@ type Detector struct {
 	result          bool
 }
 
-func NewDetector(path string) *Detector {
-	d := &Detector{
-		filePath: path,
-	}
+func NewDetector(img image.Image) *Detector {
+	d := &Detector{image: img }
 	return d
 }
 
 func (d *Detector) Parse() (result bool, err error) {
-	img, err := decodeImage(d.filePath)
-	if err != nil {
-		return false, err
-	}
+	img := d.image
 	bounds := img.Bounds()
 	d.image = img
 	d.width = bounds.Size().X
