@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"math"
+	"net/http"
 	"path/filepath"
 	"sort"
 )
@@ -25,6 +26,28 @@ func IsFileNude(imageFilePath string) (bool, error) {
 
 	return IsImageNude(img)
 }
+
+
+func IsURLNude(link string) (bool, error) {
+
+	res, err := http.Get(link)
+
+	if err != nil {
+		return false, err
+	} else {
+
+		img, _, err := image.Decode(res.Body)
+
+		if err != nil {
+			return false, err
+		} else {
+			return IsImageNude(img)
+		}
+
+	}
+
+} // IsURLNude
+
 
 func IsImageNude(img image.Image) (bool, error) {
 	d:= NewDetector(img)
