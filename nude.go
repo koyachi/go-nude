@@ -27,7 +27,7 @@ func IsFileNude(imageFilePath string) (bool, error) {
 }
 
 func IsImageNude(img image.Image) (bool, error) {
-	d:= NewDetector(img)
+	d := NewDetector(img)
 	return d.Parse()
 }
 
@@ -47,7 +47,7 @@ type Detector struct {
 }
 
 func NewDetector(img image.Image) *Detector {
-	d := &Detector{image: img }
+	d := &Detector{image: img}
 	return d
 }
 

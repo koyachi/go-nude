@@ -1,7 +1,6 @@
 package main
 
 import (
-	"../../"
 	"fmt"
 	"image"
 	"image/color"
@@ -10,6 +9,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/koyachi/go-nude"
 )
 
 func fillSkinPixels(imagePath string, regions nude.Regions) {
