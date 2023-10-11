@@ -1,9 +1,10 @@
 package main
 
 import (
-	"../../"
 	"fmt"
 	"log"
+
+	"github.com/koyachi/go-nude"
 )
 
 func main() {
